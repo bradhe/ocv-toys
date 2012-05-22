@@ -131,9 +131,6 @@ class Square {
 };
 
 int main(int argc, char ** argv) {
-  cv::namedWindow(WINDOW_NAME, CV_WINDOW_AUTOSIZE);
-  cv::moveWindow(WINDOW_NAME, 100, 100);
-
   cv::VideoCapture cap(0);
   cap.set(CV_CAP_PROP_FORMAT, CV_8UC3);
 
@@ -142,34 +139,26 @@ int main(int argc, char ** argv) {
     return(0);
   }
 
-  cv::Mat img;
+  cv::Mat img, mask;
   Square square(img);
   IntensitySearch searcher(img);
+
+  cv::MserFeatureDetector detector;
 
   // We will keep the GCD for later.
   int _gcd = -1;
 
   for(;;) {
     cap >> img;
-    cv::Size size = img.size();
+    std::vector<cv::KeyPoint> keyPoints;
+    detector.detect(img, keyPoints, mask);
 
-    if(_gcd < 1) {
-      _gcd = gcd(size.width, size.height);
-
-      // If it's STILL < 1, we've got a problemo.
-      if(_gcd < 1) {
-        throw std::exception();
-      }
-
-      // Subdivide this further.
-      _gcd /= 4;
+    std::vector<cv::KeyPoint>::iterator it;
+    for(it = keyPoints.begin(); it != keyPoints.end(); ++it) {
+      cv::circle(img, it->pt, 1, cv::Scalar(0,255,0));
     }
 
-
-    // Find the most intense spot and put a box there.
-    cv::Point intensestPoint = searcher.FindGreatestIntensity(_gcd);
-    square.Draw(intensestPoint.x + (_gcd / 2), intensestPoint.y + (_gcd / 2), _gcd, _gcd);
-
     cv::imshow(WINDOW_NAME, img);
+    sleep(0);
   }
 }
